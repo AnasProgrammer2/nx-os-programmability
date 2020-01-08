@@ -1,8 +1,15 @@
 FROM phusion/baseimage:0.10.1
-MAINTAINER Nicolas Delecroix <ndelecro@cisco.com>
+MAINTAINER Mike Wiebe <mwiebe@cisco.com>
 
 # Use baseimage-docker's init system.
 CMD ["/sbin/my_init"]
+
+# Set proxy servers
+# Uncomment the following block with your specific proxy server info if needed.
+# ENV HTTP_PROXY "http://proxy_server.domain.com:80"
+# ENV HTTPS_PROXY "https://proxy_server.domain.com:80"
+# ENV http_proxy "http://proxy_server.domain.com:80"
+# ENV https_proxy "https://proxy_server.domain.com:80"
 
 # Dependencies
 RUN	apt-get -y update && \
@@ -51,3 +58,7 @@ RUN	mkdir -p /root/.emacs.d/lisp && \
 
 # Clean up APT when done.
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Unset ENV proxy vars
+RUN unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy
+CMD sh
