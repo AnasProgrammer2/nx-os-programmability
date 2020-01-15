@@ -17,7 +17,7 @@ RUN	apt-get -y update && \
 	pip install scp
 
 # Ansible
-RUN	pip install ansible==2.7.8 ncclient && \
+RUN	pip install ansible==2.9.2 ncclient && \
 	mkdir /root/Ansible /etc/ansible
 ADD     Ansible /root/Ansible
 ADD	Ansible/Config /etc/ansible
@@ -58,7 +58,3 @@ RUN	mkdir -p /root/.emacs.d/lisp && \
 
 # Clean up APT when done.
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# Unset ENV proxy vars
-RUN unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy
-CMD sh
