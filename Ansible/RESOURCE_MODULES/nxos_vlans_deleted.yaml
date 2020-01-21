@@ -1,0 +1,9 @@
+---
+- hosts: nxos_vteps
+  gather_facts: no
+  connection: network_cli
+
+  tasks:
+    - name:  Delete provided configuration from the device.
+      nxos_vlans:
+        state: deleted

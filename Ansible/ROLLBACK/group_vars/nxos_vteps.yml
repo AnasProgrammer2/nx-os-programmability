@@ -1,0 +1,7 @@
+---
+ansible_network_os: nxos
+ansible_connection: httpapi
+ansible_user: ciscolive
+ansible_httpapi_pass: cisco123^&55
+ansible_httpapi_use_ssl: True
+ansible_httpapi_validate_certs: False

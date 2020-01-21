@@ -1,0 +1,29 @@
+---
+- hosts: nxos_vteps
+  gather_facts: no
+  connection: httpapi
+
+  tasks:
+    - name: Create checkpoint
+      nxos_rollback:
+        checkpoint_file: clbkup.cfg
+
+    # Begin VXLAN Configuration
+    - block:
+      - name: Create VLAN and VNI
+        nxos_vlan:
+          vlan_id: 2200
+          mapped_vni: 20200
+          admin_state: up
+
+      - name: Add L2VNI to Overlay
+        nxos_vxlan_vtep_vni:
+          interface: nve1
+          vni: 20200
+          multicast_group: 239.239.239.100
+
+      # Uncomment to rollback in case of error
+      #rescue:
+      #  - name: Rollback to checkpoint
+      #    nxos_rollback:
+      #      rollback_to: clbkup.cfg
