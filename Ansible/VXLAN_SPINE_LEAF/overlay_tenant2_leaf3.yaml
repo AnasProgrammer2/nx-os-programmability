@@ -1,0 +1,85 @@
+---
+- hosts: lf3
+  gather_facts: no
+  connection: network_cli
+
+  vars_files:
+    - topology.yaml
+
+  tasks:
+    - name: Map vlan 102 to L3 vn-segment 900002
+      nxos_config:
+        lines:
+          - vn-segment 900002
+        parents: vlan 102
+
+    - name: Map vlan 900 to L2 vn-segment 6000
+      nxos_config:
+        lines:
+          - vn-segment 6000
+        parents: vlan 900
+
+    - name: Configure Tenant vrf
+      nxos_config:
+        lines:
+          - vni 900002
+          - rd auto
+        parents: vrf context Tenant-2
+
+    - name: Configure Tenant vrf address-family
+      nxos_config:
+        lines:
+          - route-target both auto
+          - route-target both auto evpn
+        parents: [vrf context Tenant-2, address-family ipv4 unicast]
+
+    - name: Configure vlan interface for vlan 900
+      nxos_config:
+        lines:
+          - no shutdown
+          - vrf member Tenant-2
+          - ip forward
+        parents: interface Vlan900
+
+    - name: Configure vlan interface for vlan 900
+      nxos_config:
+        lines:
+          - no shutdown
+          - vrf member Tenant-2
+          - ip address 192.168.0.1/24
+          - fabric forwarding mode anycast-gateway
+        parents: interface Vlan900
+
+    - name: Add member L2 vnis to vtep
+      nxos_config:
+        lines:
+          - ingress-replication protocol bgp
+        parents: [interface nve1, "{{ item }}"]
+      loop: [member vni 6000]
+
+    - name: Add member L3 vni to vtep
+      nxos_config:
+        lines:
+          - member vni 900002 associate-vrf
+        parents: interface nve1
+
+    - name: Add L2 vnis to evpn
+      nxos_config:
+        lines:
+          - rd auto
+          - route-target import auto
+          - route-target export auto
+        parents: [evpn, "{{ item }}"]
+      loop: [vni 6000 l2]
+
+    - name: Add Tenant vrf to BGP
+      nxos_config:
+        lines:
+          - address-family ipv4 unicast
+        parents: [router bgp 65535, vrf Tenant-2]
+
+    - name: Enable vlan 900 access on Eth1/3
+      nxos_config:
+        lines:
+          - switchport access vlan 900
+        parents: [interface Ethernet1/3]

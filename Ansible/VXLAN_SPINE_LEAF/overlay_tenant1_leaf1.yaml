@@ -1,0 +1,101 @@
+---
+- hosts: lf1
+  gather_facts: no
+  connection: network_cli
+
+  vars_files:
+    - topology.yaml
+
+  tasks:
+    - name: Map vlan 101 to L3 vn-segment 900001
+      nxos_config:
+        lines:
+          - vn-segment 900001
+        parents: vlan 101
+
+    - name: Map vlan 1000 to L2 vn-segment 5000
+      nxos_config:
+        lines:
+          - vn-segment 5000
+        parents: vlan 1000
+
+    - name: Map vlan 1001 to L2 vn-segment 5005
+      nxos_config:
+        lines:
+          - vn-segment 5005 
+        parents: vlan 1001
+
+    - name: Configure Tenant vrf
+      nxos_config:
+        lines:
+          - vni 900001
+          - rd auto
+        parents: vrf context Tenant-1
+
+    - name: Configure Tenant vrf address-family
+      nxos_config:
+        lines:
+          - route-target both auto 
+          - route-target both auto evpn
+        parents: [vrf context Tenant-1, address-family ipv4 unicast]
+
+    - name: Configure vlan interface for vlan 101
+      nxos_config:
+        lines:
+          - no shutdown
+          - vrf member Tenant-1
+          - ip forward
+        parents: interface Vlan101
+
+    - name: Configure vlan interface for vlan 1000
+      nxos_config:
+        lines:
+          - no shutdown
+          - vrf member Tenant-1
+          - ip address 192.168.0.1/24
+          - fabric forwarding mode anycast-gateway
+        parents: interface Vlan1000
+
+    - name: Configure vlan interface for vlan 1001
+      nxos_config:
+        lines:
+          - no shutdown
+          - vrf member Tenant-1
+          - ip address 192.168.10.1/24 
+          - fabric forwarding mode anycast-gateway
+        parents: interface Vlan1001
+
+    - name: Add member L2 vnis to vtep
+      nxos_config:
+        lines:
+          - ingress-replication protocol bgp
+        parents: [interface nve1, "{{ item }}"]
+      loop: [member vni 5000, member vni 5005]
+
+    - name: Add member L3 vni to vtep
+      nxos_config:
+        lines:
+          - member vni 900001 associate-vrf
+        parents: interface nve1
+
+    - name: Add L2 vnis to evpn
+      nxos_config:
+        lines:
+          - rd auto
+          - route-target import auto
+          - route-target export auto
+        parents: [evpn, "{{ item }}"]
+      loop: [vni 5000 l2, vni 5005 l2]
+
+    - name: Add Tenant vrf to BGP
+      nxos_config:
+        lines:
+          - address-family ipv4 unicast
+        parents: [router bgp 65535, vrf Tenant-1]
+
+    - name: Enable vlan 1000 access on Eth1/3
+      nxos_config:
+        lines:
+          - switchport access vlan 1000
+        parents: [interface Ethernet1/3] 
+ 

@@ -1,0 +1,19 @@
+---
+- hosts: hosts
+  gather_facts: no
+  connection: network_cli
+
+  vars_files:
+    - topology.yaml
+
+  tasks:
+    - set_fact: topo="{{ topology['hosts_base'][inventory_hostname_short] }}"
+
+    - name: Configure test interface and gateway route
+      nxos_config:
+        lines:
+          - no switchport
+          - no shutdown
+          - "ip address {{ topo['ip'] }}"
+          - "ip route 0.0.0.0/0 {{ topo['gw'] }}"
+        parents: " {{ topo['name'] }}"
