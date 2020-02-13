@@ -12,12 +12,20 @@ access_port_arg = sys.argv[4]
 
 clis = []
 
+def enable_features():
+    clis.append("feature bgp")
+    clis.append("feature interface-vlan")
+    clis.append("feature vn-segment-vlan-based")
+    clis.append("feature nv overlay")
+    clis.append("nv overlay evpn")
+
 def create_vlan_and_l2vni(vlan, l2vni):
     clis.append("vlan %s" % vlan)
     clis.append("  vn-segment %s" % l2vni)
 
 def add_l2vni_to_nve(l2vni, mcast_group):
     clis.append("int nve1")
+    clis.append("  host-reachability protocol bgp")
     clis.append("  member vni %s" % l2vni)
     clis.append("  mcast-group %s" % mcast_group)
     clis.append("  suppress-arp")
@@ -31,6 +39,7 @@ def add_l2vni_to_evpn(l2vni):
 
 def set_vlan_on_access_port(vlan, access_port):
     clis.append("int %s" % access_port)
+    clis.append("  switchport")
     clis.append("  switchport access vlan %s" % vlan)
 
 def check_vlan(switch, user, vlan):
@@ -43,6 +52,7 @@ def check_vlan(switch, user, vlan):
 def main():
     get_switch_password()
 
+    enable_features()
     create_vlan_and_l2vni(vlan_arg, l2vni_arg)
     add_l2vni_to_nve(l2vni_arg, mcast_group_arg)
     add_l2vni_to_evpn(l2vni_arg)
@@ -51,7 +61,9 @@ def main():
     vteps = [line.rstrip('\n') for line in open(vteps_file)]
     for vtep in vteps:
         print("****** VTEP %s ******" % (vtep))
+        print("****** Sending Commands To Switch ******")
         post_clis(vtep, switch_user, clis)
+        print("****** Verify Switch Configuration ******")
         check_vlan(vtep, switch_user, vlan_arg)
 
 if __name__ == "__main__":

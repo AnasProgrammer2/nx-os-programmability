@@ -1,0 +1,43 @@
+---
+- hosts: spine 
+  gather_facts: no
+  connection: network_cli
+
+  vars_files:
+    - topology.yaml
+
+  tasks:
+    - name: Enable features
+      nxos_feature:
+        feature: "{{ item }}"
+        state: enabled
+      loop: [bgp, 'nv overlay']
+
+    - name: Enable nv overlay evpn 
+      nxos_config:
+        lines:
+          - nv overlay evpn
+
+    - name: Configure BGP
+      nxos_config:
+        lines:
+          - "router-id {{ topology['ospf'][inventory_hostname_short]['router_id'] }}"
+        parents: "router bgp 65535"
+
+    - name: Configure BGP neighbors
+      nxos_config:
+        lines:
+          - remote-as 65535 
+          - update-source loopback1 
+        parents: ['router bgp 65535', "neighbor {{ item }}"] 
+      loop: "{{ topology['bgp']['spine_neighbors'] }}"
+
+    - name: Configure BGP l2vpn evpn address-family route reflector clients
+      nxos_config:
+        lines:
+          - send-community 
+          - send-community extended 
+          - route-reflector-client
+        parents: ['router bgp 65535', "neighbor {{ item }}", 'address-family l2vpn evpn']
+      loop: "{{ topology['bgp']['spine_neighbors'] }}"
+ 

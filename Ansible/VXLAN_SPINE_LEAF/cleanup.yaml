@@ -1,0 +1,61 @@
+---
+- hosts: vxlan_devices
+  gather_facts: no
+  connection: network_cli
+
+  vars_files:
+    - topology.yaml
+
+  tasks:
+    - name: Disable Features
+      nxos_feature:
+        feature: "{{ item }}"
+        state: disabled 
+      loop: [ospf, pim, bgp, interface-vlan, vn-segment-vlan-based, 'nv overlay']
+      ignore_errors: yes
+
+    - name: Disable nv overlay evpn
+      nxos_config:
+        lines: no nv overlay evpn
+
+    - name: Default Ethernet Interfaces 
+      nxos_config:
+        lines:
+          - "default interface {{ item }}"
+      loop: "{{ topology['ethernet'][inventory_hostname_short] }}"
+
+    - name: Remove Loopback Interfaces
+      nxos_config:
+        lines:
+          - "no interface {{ item }}" 
+      loop: [loopback0, loopback1] 
+      ignore_errors: yes
+
+    - name: Remove all the VLANs
+      nxos_config:
+        lines:
+          - "no vlan 101-102,900,1000-1001"
+
+    - name: Remove all VRFs
+      nxos_config:
+        lines:
+          - "no vrf contex {{ item }}"
+      loop: [Tenant-1, Tenant-2]
+      ignore_errors: yes
+
+    - name: Remove access vlans from eth 1/3 and 1/4 of leaf 1 and leaf 3.
+      nxos_config:
+        lines:
+          - "default interface {{ item }}"
+      loop: [Ethernet1/3, Ethernet1/4]
+      ignore_errors: yes
+      when: (inventory_hostname == "lf1" or inventory_hostname == "lf3")
+
+    - name: Collect running config from each device 
+      nxos_command:
+        commands:
+          - command: show run 
+      register: output
+
+    - name: Display Running Config
+      debug: msg="{{ output }}"

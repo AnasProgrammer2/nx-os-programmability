@@ -1,0 +1,44 @@
+---
+- hosts: vxlan_devices
+  gather_facts: no
+  connection: network_cli
+
+  vars_files:
+    - topology.yaml
+
+  tasks:
+    - name: Collect bgp l2vpn evpn neighbor information
+      nxos_command:
+        commands:
+          - command: show bgp l2vpn evpn summary
+      register: output
+
+    - name: Display bgp l2vpn evpn neighbor information
+      debug: msg="{{ output.stdout_lines[0] }}"
+
+    - name: Collect vni-vtep interface information
+      nxos_command:
+        commands:
+          - command: show nve interface
+      register: output
+
+    - name: Display vni-vtep information
+      debug: msg="{{ output.stdout_lines[0] }}"
+
+    - name: Collect nve vni information
+      nxos_command:
+        commands:
+          - command: show nve vni
+      register: output
+
+    - name: Display nve vni information
+      debug: msg="{{ output.stdout_lines[0] }}"
+
+    - name: Collect nve peer information
+      nxos_command:
+        commands:
+          - command: show nve peers
+      register: output
+
+    - name: Display nve peer information
+      debug: msg="{{ output.stdout_lines[0] }}"

@@ -1,0 +1,55 @@
+---
+- hosts: leafs
+  gather_facts: no
+  connection: network_cli
+
+  vars_files:
+    - topology.yaml
+
+  tasks:
+    - name: Enable features
+      nxos_feature:
+        feature: "{{ item }}"
+        state: enabled
+      loop: [bgp, interface-vlan, vn-segment-vlan-based, 'nv overlay']
+
+    - name: Enable nv overlay evpn 
+      nxos_config:
+        lines:
+          - nv overlay evpn
+
+    - name: Configure anycast gateway mac
+      nxos_config:
+        lines:
+          - fabric forwarding anycast-gateway-mac 0000.2222.3333
+
+    - name: Configure nve interface 
+      nxos_config:
+        lines:
+          - no shutdown
+          - source-interface loopback1 
+          - host-reachability protocol bgp
+        parents: "interface nve1"       
+
+    - name: Configure BGP
+      nxos_config:
+        lines:
+          - "router-id {{ topology['ospf'][inventory_hostname_short]['router_id'] }}"
+        parents: "router bgp 65535"
+
+    - name: Configure BGP neighbors
+      nxos_config:
+        lines:
+          - remote-as 65535 
+          - update-source loopback1 
+        parents: ['router bgp 65535', "neighbor {{ item }}"] 
+      loop: "{{ topology['bgp']['leaf_neighbors'] }}"
+
+    - name: Configure BGP l2vpn evpn address-family 
+      nxos_config:
+        lines:
+          - send-community 
+          - send-community extended 
+        parents: ['router bgp 65535', "neighbor {{ item }}", 'address-family l2vpn evpn']
+      loop: "{{ topology['bgp']['leaf_neighbors'] }}"
+ 

@@ -1,0 +1,15 @@
+---
+- hosts: nxos_vteps
+  gather_facts: no
+  connection: network_cli
+
+  tasks:
+    - name: Override device configuration with provided configuration.
+      nxos_vlans:
+        config:
+          - { vlan_id: 10, name: test-vlan10}
+          - { vlan_id: 11, name: production-vlan11}
+          - { vlan_id: 13, name: test-vlan13}
+          - { vlan_id: 14, name: test-vlan14}
+          - { vlan_id: 15, name: test-vlan15}
+        state: overridden

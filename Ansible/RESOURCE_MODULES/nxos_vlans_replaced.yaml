@@ -1,0 +1,14 @@
+---
+- hosts: nxos_vteps
+  gather_facts: no
+  connection: network_cli
+
+  tasks:
+    - name: Replace device configuration with provided configuration.
+      nxos_vlans:
+        config:
+          - { vlan_id: 11, name: production-vlan11}
+          - { vlan_id: 50, name: production-vlan50}
+          - { vlan_id: 51, name: production-vlan51}
+          - { vlan_id: 3, name: production-vlan3}
+        state: replaced

@@ -1,0 +1,68 @@
+---
+- hosts: vxlan_devices 
+  gather_facts: no
+  connection: network_cli
+
+  vars_files:
+    - topology.yaml
+
+  tasks:
+    - name: Enable features
+      nxos_feature:
+        feature: "{{ item }}"
+        state: enabled
+      loop: [ospf, pim]
+
+    - name: Configure OSPF process
+      nxos_ospf_vrf:
+        ospf: UNDERLAY
+        router_id: "{{ topology['ospf'][inventory_hostname_short]['router_id'] }}"
+        state: present
+
+    - name: Configure base loopback interfaces
+      nxos_interfaces:
+        config: "{{ topology['loopbacks_base'][inventory_hostname_short] }}"
+        state: merged
+
+    - name: Configure base ethernet interfaces
+      nxos_interfaces:
+        config: "{{ topology['ethernet_base'][inventory_hostname_short] }}"
+        state: merged
+
+    - name: Configure loopback ipv4 addresses
+      nxos_l3_interfaces:
+        config: "{{ topology['loopbacks_l3'][inventory_hostname_short] }}"
+        state: merged
+
+    - name: Enable OSPF on all spine and leaf interfaces
+      nxos_interface_ospf:
+        interface: "{{ item }}"
+        ospf: UNDERLAY
+        area: 0.0.0.0
+        network: point-to-point
+        state: present
+      loop: "{{ topology['interfaces'][inventory_hostname_short] }}"
+
+    - name: Enable pim sparse mode on all spine and leaf interfaces
+      nxos_pim_interface:
+        interface: "{{ item }}"
+        sparse: true
+      loop: "{{ topology['interfaces'][inventory_hostname_short] }}"
+
+    - name: Configure ip unnumbered on all spine and leaf ethernet interfaces.
+      nxos_config:
+        lines:
+          - medium p2p
+          - ip unnumbered loopback1
+          - system jumbomtu 9216
+        parents: "interface {{ item }}"
+      loop: "{{ topology['ethernet'][inventory_hostname_short] }}"
+
+    - name: Gather OSPF neighbor data from each node
+      nxos_command:
+        commands:
+          - command: show ip ospf neighbors
+      register: output
+
+    - name: Display OSPF neighbor data
+      debug: msg="{{ output.stdout_lines[0] }}"

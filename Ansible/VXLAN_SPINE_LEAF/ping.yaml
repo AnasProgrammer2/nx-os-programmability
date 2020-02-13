@@ -1,0 +1,14 @@
+---
+- hosts: vxlan_devices 
+  gather_facts: no
+  connection: network_cli
+
+  vars_files:
+    - topology.yaml
+
+  tasks:
+    - name: Verify IP reachability
+      nxos_ping:
+        dest: "{{ item }}"
+        state: present
+      loop: "{{ topology['ip_verify_list'] }}"

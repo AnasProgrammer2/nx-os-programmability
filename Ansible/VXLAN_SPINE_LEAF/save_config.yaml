@@ -1,0 +1,22 @@
+---
+- hosts: all_devices
+  gather_facts: no
+  connection: network_cli
+
+  vars_files:
+    - topology.yaml
+
+  tasks:
+    - name: Save running config to bootflash
+      nxos_command: 
+        commands:
+          - terminal dont-ask
+          - copy running-config bootflash:vxlan_config
+
+    - name: Display file on bootflash
+      nxos_command:
+        commands: dir bootflash:vxlan_config
+      register: result
+
+    - debug: msg="{{ result }}"
+ 

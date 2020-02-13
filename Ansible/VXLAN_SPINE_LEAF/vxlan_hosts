@@ -1,0 +1,36 @@
+[all_devices]
+sp1 ansible_host=n9kv-spine1.example.com
+sp2 ansible_host=n9kv-spine2.example.com
+lf1 ansible_host=n9kv-leaf1.example.com
+lf2 ansible_host=n9kv-leaf2.example.com
+lf3 ansible_host=n9kv-leaf3.example.com
+lf4 ansible_host=n9kv-leaf4.example.com
+ha ansible_host=n9kv-hosta.example.com
+hb ansible_host=n9kv-hostb.example.com
+hc ansible_host=n9kv-hostc.example.com
+hd ansible_host=n9kv-hostd.example.com
+
+[vxlan_devices]
+sp1 ansible_host=n9kv-spine1.example.com
+sp2 ansible_host=n9kv-spine2.example.com
+lf1 ansible_host=n9kv-leaf1.example.com
+lf2 ansible_host=n9kv-leaf2.example.com
+lf3 ansible_host=n9kv-leaf3.example.com
+lf4 ansible_host=n9kv-leaf4.example.com
+
+[spine]
+sp1 ansible_host=n9kv-spine1.example.com
+sp2 ansible_host=n9kv-spine2.example.com
+
+[leafs]
+lf1 ansible_host=n9kv-leaf1.example.com
+lf2 ansible_host=n9kv-leaf2.example.com
+lf3 ansible_host=n9kv-leaf3.example.com
+lf4 ansible_host=n9kv-leaf4.example.com
+
+[hosts]
+ha ansible_host=n9kv-hosta.example.com
+hb ansible_host=n9kv-hostb.example.com
+hc ansible_host=n9kv-hostc.example.com
+hd ansible_host=n9kv-hostd.example.com
+

@@ -1,0 +1,6 @@
+ansible_ssh_user: admin 
+ansible_ssh_pass: ciscolive123
+ansible_ssh_port: 22
+ansible_network_os: nxos
+ansible_httpapi_port: 80 
+
